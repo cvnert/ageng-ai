@@ -51,8 +51,7 @@ def chat(req: ChatRequest):
     # 构建消息列表
     messages = [{"role": "system", "content": system_prompt}]
     for msg in req.messages:
-        if msg.role == "user":
-            messages.append({"role": "user", "content": msg.content})
+        messages.append({"role": msg.role, "content": msg.content})
 
     def generate():
         completion_text = ""
