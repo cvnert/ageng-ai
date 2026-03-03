@@ -60,10 +60,33 @@ def chat(req: ChatRequest):
         if msg.role == "user":
             langchain_messages.append(HumanMessage(content=msg.content))
 
+    # 计算输入 token（估算）
+    prompt_text = system_prompt + "\n" + "\n".join([m.content for m in req.messages])
+    prompt_tokens = len(prompt_text) // 4  # 粗略估算
+
+    completion_text = ""
+
     def generate():
+        nonlocal completion_text
         for chunk in llm.stream(langchain_messages):
-            data = json.dumps({"content": chunk.content}, ensure_ascii=False)
-            yield f"data: {data}\n\n"
+            if chunk.content:
+                completion_text += chunk.content
+                data = json.dumps({"content": chunk.content}, ensure_ascii=False)
+                yield f"data: {data}\n\n"
+
+        # 计算输出 token
+        completion_tokens = len(completion_text) // 4  # 粗略估算
+        total_tokens = prompt_tokens + completion_tokens
+
+        # 发送 token 统计信息
+        usage_data = json.dumps({
+            "usage": {
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens
+            }
+        }, ensure_ascii=False)
+        yield f"data: {usage_data}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
