@@ -73,9 +73,12 @@ def chat(req: ChatRequest):
                     choice = output.choices[0]
                     if choice.message and choice.message.content:
                         content = choice.message.content
-                        completion_text += content
-                        data = json.dumps({"content": content}, ensure_ascii=False)
-                        yield f"data: {data}\n\n"
+                        # 只发送新增的部分（增量）
+                        new_content = content[len(completion_text):]
+                        completion_text = content
+                        if new_content:
+                            data = json.dumps({"content": new_content}, ensure_ascii=False)
+                            yield f"data: {data}\n\n"
 
                 # 获取 token 使用情况（在最后一个 chunk 中）
                 if chunk.usage:
