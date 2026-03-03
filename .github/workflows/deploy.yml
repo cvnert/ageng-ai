@@ -20,7 +20,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "*.py,*.txt,*.toml"
           target: /opt/agent/ai/
-          rm: true
+          overwrite: true
 
       - name: Install dependencies and restart service
         uses: appleboy/ssh-action@v1.2.0
@@ -30,5 +30,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/agent/ai
-            pip install -r requirements.txt
+            python3 -m venv venv
+            venv/bin/pip install -r requirements.txt
             sudo systemctl restart agent-ai
